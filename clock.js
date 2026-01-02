@@ -1,109 +1,184 @@
-// Display Digital Clock
-function updateClock() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    document.getElementById("digitalClock").textContent = `${hours}:${minutes}:${seconds}`;
-}
-
-// Update the clock every second
-setInterval(updateClock, 1000);
-
-// Countdown Timer
 let countdownInterval;
 let isOnBreak = false;
-let initialCountdownSeconds;
+let totalSeconds;
+let remainingSeconds;
+let isRunning = false;
+
+const circle = document.querySelector('.progress-ring__circle');
+// Circumference calculation for 340px SVG with 160px radius: 2 * PI * 160 = 1005.3
+let circumference = 1005.3;
+
+function updateCircumference() {
+    const radius = circle.r.baseVal.value;
+    circumference = radius * 2 * Math.PI;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+}
+
+updateCircumference();
+
+function setProgress(percent) {
+    const offset = circumference - (percent / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+    circle.style.opacity = percent / 100;
+}
+
+function updateDisplay() {
+    const mins = Math.floor(remainingSeconds / 60);
+    const secs = remainingSeconds % 60;
+    document.getElementById('countdownDisplay').textContent = 
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    
+    const progress = (remainingSeconds / totalSeconds) * 100;
+    setProgress(progress);
+}
+
+function playAlert() {
+    const alertSound = document.getElementById('alertSound');
+    if (!alertSound) {
+        console.error('Alert sound element not found');
+        return;
+    }
+    
+    // Reset to start before playing
+    alertSound.currentTime = 0;
+    
+    // Play with error handling
+    const playPromise = alertSound.play();
+    
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
+                console.log('Alert sound playing');
+                // Auto-stop after 3 seconds
+                setTimeout(() => {
+                    alertSound.pause();
+                    alertSound.currentTime = 0;
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error playing alert sound:', error);
+                alert('Timer complete! (Enable sound permissions to hear alerts)');
+            });
+    }
+}
+
+function toggleMute() {
+    const alertSound = document.getElementById('alertSound');
+    const btn = document.getElementById('musicBtn');
+    
+    if (alertSound.muted) {
+        alertSound.muted = false;
+        btn.classList.remove('fa-volume-mute');
+        btn.classList.add('fa-volume-up');
+    } else {
+        alertSound.muted = true;
+        btn.classList.remove('fa-volume-up');
+        btn.classList.add('fa-volume-mute');
+    }
+}
 
 function startCountdown() {
-    clearInterval(countdownInterval);
-    isOnBreak = false;
+    if (isRunning) {
+        clearInterval(countdownInterval);
+        isRunning = false;
+        document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i>';
+        return;
+    }
 
-    // Get countdown hours, minutes, and seconds
-    const hours = parseInt(document.getElementById("hoursInput").value) || 0;
-    const minutes = parseInt(document.getElementById("minutesInput").value) || 0;
-    const seconds = parseInt(document.getElementById("secondsInput").value) || 0;
+    if (!remainingSeconds || remainingSeconds === 0) {
+        const focusMins = parseInt(document.getElementById('focusInput').value) || 25;
+        const breakMins = parseInt(document.getElementById('breakInput').value) || 5;
+        totalSeconds = (isOnBreak ? breakMins : focusMins) * 60;
+        remainingSeconds = totalSeconds;
+    }
 
-    // Get break time in hours, minutes, and seconds
-    const breakHours = parseInt(document.getElementById("breakHoursInput").value) || 0;
-    const breakMinutes = parseInt(document.getElementById("breakMinutesInput").value) || 0;
-    const breakSeconds = parseInt(document.getElementById("breakSecondsInput").value) || 0;
+    isRunning = true;
+    document.getElementById('startBtn').innerHTML = '<i class="fas fa-pause"></i>';
 
-    // Convert times to seconds
-    initialCountdownSeconds = hours * 3600 + minutes * 60 + seconds;
-    let breakTimeSeconds = breakHours * 3600 + breakMinutes * 60 + breakSeconds;
+    countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        updateDisplay();
 
-    // Function to update countdown
-    function updateCountdown() {
-        if (!isOnBreak && initialCountdownSeconds > 0) {
-            initialCountdownSeconds--;
-            displayTime(initialCountdownSeconds, "countdownDisplay");
-
-            if (initialCountdownSeconds === 0) {
-                playSound(); // Play sound when countdown ends
-                if (breakTimeSeconds > 0) {
-                    isOnBreak = true;
-                    initialCountdownSeconds = breakTimeSeconds;
-                    document.getElementById("countdownDisplay").textContent = "Break time!";
-                }
-            }
-        } else if (isOnBreak && initialCountdownSeconds > 0) {
-            initialCountdownSeconds--;
-            displayTime(initialCountdownSeconds, "countdownDisplay");
-
-            if (initialCountdownSeconds === 0) {
-                playSound(); // Play sound when break time ends
-                isOnBreak = false;
-                initialCountdownSeconds = hours * 3600 + minutes * 60 + seconds;
-                startCountdown();
-            }
+        if (remainingSeconds <= 0) {
+            clearInterval(countdownInterval);
+            isRunning = false;
+            document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i>';
+            
+            // Play alert sound when timer completes
+            playAlert();
+            
+            // Switch mode
+            isOnBreak = !isOnBreak;
+            document.getElementById('timerLabel').textContent = isOnBreak ? "Break" : "Focus";
+            
+            remainingSeconds = 0;
+            updateDisplay();
+            
+            // Don't automatically start next phase - let user click start
         }
-    }
-
-    // Start countdown interval
-    countdownInterval = setInterval(updateCountdown, 1000);
+    }, 1000);
 }
 
-// Function to display time in HH:MM:SS format
-function displayTime(seconds, elementId) {
-    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-    const secs = String(seconds % 60).padStart(2, '0');
-    document.getElementById(elementId).textContent = `${hrs}:${mins}:${secs}`;
-}
-
-// Play sound function
-function playSound() {
-    const soundToggle = document.getElementById("soundToggle").checked;
-    if (soundToggle) {
-        const alertSound = document.getElementById("alertSound");
-        alertSound.play();
-        document.getElementById("muteButton").style.display = "inline-block"; // Show mute button
-    }
-}
-
-// Mute sound function
-function muteSound() {
-    const alertSound = document.getElementById("alertSound");
-    alertSound.pause();
-    alertSound.currentTime = 0; // Reset sound to the beginning
-    document.getElementById("muteButton").style.display = "none"; // Hide mute button
-}
-
-// Reset Function
 function resetTimer() {
     clearInterval(countdownInterval);
+    isRunning = false;
     isOnBreak = false;
-    document.getElementById("countdownDisplay").textContent = "";
-
-    // Clear all input fields
-    document.getElementById("hoursInput").value = "";
-    document.getElementById("minutesInput").value = "";
-    document.getElementById("secondsInput").value = "";
-    document.getElementById("breakHoursInput").value = "";
-    document.getElementById("breakMinutesInput").value = "";
-    document.getElementById("breakSecondsInput").value = "";
-
-    // Reset and hide mute button
-    muteSound();
+    document.getElementById('timerLabel').textContent = "Focus";
+    document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i>';
+    
+    const focusMins = parseInt(document.getElementById('focusInput').value) || 25;
+    totalSeconds = focusMins * 60;
+    remainingSeconds = totalSeconds;
+    updateDisplay();
 }
+
+function toggleSettings() {
+    const modal = document.getElementById('settingsModal');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function saveSettings() {
+    toggleSettings();
+    resetTimer();
+}
+
+function changeTheme() {
+    const theme = document.getElementById('themeSelect').value;
+    document.body.className = `theme-${theme}`;
+    localStorage.setItem('pomodoroTheme', theme);
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+        document.getElementById('fullscreenBtn').classList.replace('fa-expand', 'fa-compress');
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+            document.getElementById('fullscreenBtn').classList.replace('fa-compress', 'fa-expand');
+        }
+    }
+}
+
+// Init
+window.onload = () => {
+    const savedTheme = localStorage.getItem('pomodoroTheme') || 'mountain';
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.value = savedTheme;
+    }
+    document.body.className = `theme-${savedTheme}`;
+    
+    const focusMins = parseInt(document.getElementById('focusInput').value) || 25;
+    totalSeconds = focusMins * 60;
+    remainingSeconds = totalSeconds;
+    updateCircumference();
+    updateDisplay();
+};
+
+window.onresize = () => {
+    updateCircumference();
+    updateDisplay();
+};
