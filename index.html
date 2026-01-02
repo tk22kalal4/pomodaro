@@ -5,77 +5,72 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="site-name" content="NEXTPULSE | AFRAHTAFREEH" />
-  <title>POMODORO TECHNIQUE</title>
-  <meta name="description" content="NEXTPULSE : ALL FREE MEDICAL MBBS VIDEOS CONTENTS ARE PRESENT AND IT IS THE BIGGEST FREE MATERIAL WEBSITE EVER." />
-    <link rel="icon" type="image/jpg" href="../logo/fevicon.jpg" />
-
-  <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
-  <script src="https://kit.fontawesome.com/3f476e9a3e.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-
-  <link rel="stylesheet" href="../nevigation.css" />
-  <link rel="stylesheet" href="../search.css" />
-  <link rel="stylesheet" href="../shareme.css">
+  <title>Minimal Pomodoro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link rel="stylesheet" href="clockx.css">
-
-  <script src="../nevigation.js" defer></script>
-   <!-- Google tag (gtag.js) -->
- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5920367457745298"
-     crossorigin="anonymous"></script> 
-
-<link rel="stylesheet" href="../popup.css" />
-<script src="../popup.js"></script>
-
-<script src="https://d3u598arehftfk.cloudfront.net/prebid_hb_12059_18609.js" async> </script>
 </head>
 
 <body>
-
-    <div class="container">
-      <div class="clock">
-        <h2>Current Time</h2>
-        <p id="digitalClock"></p>
-      </div>
-      <div class="timer">
-        <h2>Reverse Timer</h2>
-        <div class="input-group">
-          <input type="number" id="hoursInput" placeholder="HH" min="0" max="99" />
-          <span>:</span>
-          <input type="number" id="minutesInput" placeholder="MM" min="0" max="59" />
-          <span>:</span>
-          <input type="number" id="secondsInput" placeholder="SS" min="0" max="59" />
-        </div>
-        <button onclick="startCountdown()">Start Timer</button>
-        <button onclick="resetTimer()">Reset</button>
-        <p id="countdownDisplay"></p>
-      </div>
-      <div class="break-timer">
-        <h2>Set Break Time</h2>
-        <div class="input-group">
-          <input type="number" id="breakHoursInput" placeholder="HH" min="0" max="99" />
-          <span>:</span>
-          <input type="number" id="breakMinutesInput" placeholder="MM" min="0" max="59" />
-          <span>:</span>
-          <input type="number" id="breakSecondsInput" placeholder="SS" min="0" max="59" />
-        </div>
-      </div>
-      <div class="sound-control">
-        <label>
-          <input type="checkbox" id="soundToggle" checked />
-          Enable Sound
-        </label>
-      </div>
-      <button id="muteButton" onclick="muteSound()" style="display: none;">Mute Sound</button>
-      <audio id="alertSound" src="alert.mp3"></audio> <!-- Replace with your sound file -->
+  <div class="top-bar">
+    <div class="left">
+      <i class="fas fa-arrow-left icon-btn" onclick="history.back()"></i>
     </div>
+    <div class="right">
+      <i class="fas fa-expand icon-btn" id="fullscreenBtn" onclick="toggleFullscreen()"></i>
+      <i class="fas fa-cog icon-btn" onclick="toggleSettings()"></i>
+      <i class="fas fa-volume-up icon-btn" id="musicBtn" onclick="toggleMute()"></i>
+    </div>
+  </div>
 
- 
-    
-    <script src="../search.js"></script>
-    <script src="../shareme.js"></script>
-    <script src="clock.js"></script>
-  
+  <div class="main-content">
+    <div class="timer-outer-container">
+      <div class="timer-container">
+        <svg class="progress-ring" width="340" height="340">
+          <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="transparent" r="160" cx="170" cy="170" />
+          <circle class="progress-ring__circle" stroke="white" stroke-width="8" fill="transparent" r="160" cx="170" cy="170" />
+        </svg>
+        <div class="timer-display">
+          <h2 id="timerLabel">Focus</h2>
+          <div id="countdownDisplay">25:00</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="startBtn" onclick="startCountdown()"><i class="fas fa-play"></i></button>
+        <button id="resetBtn" onclick="resetTimer()"><i class="fas fa-undo"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <h3>Settings</h3>
+      <div class="setting-item">
+        <label>Focus Time (min)</label>
+        <input type="number" id="focusInput" value="25" min="1">
+      </div>
+      <div class="setting-item">
+        <label>Break Time (min)</label>
+        <input type="number" id="breakInput" value="5" min="1">
+      </div>
+      <div class="setting-item">
+        <label>Theme</label>
+        <select id="themeSelect" onchange="changeTheme()">
+          <option value="mountain">Mountain Forest</option>
+          <option value="forest">Peaceful Forest</option>
+          <option value="snow">Winter Snow</option>
+          <option value="beach">Ocean Sunset</option>
+        </select>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">Save & Close</button>
+    </div>
+  </div>
+
+  <audio id="alertSound" preload="auto">
+    <source src="audio.mp3" type="audio/mpeg">
+</audio>
+
+  <script src="clock.js"></script>
 </body>
 
 </html>
